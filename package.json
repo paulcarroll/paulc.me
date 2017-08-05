@@ -1,0 +1,22 @@
+{
+  "name": "pcarroll.me",
+  "version": "1.0.0",
+  "description": "My profile",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulcarroll/pcarroll.me.git"
+  },
+  "author": "Paul Carroll",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/paulcarroll/pcarroll.me/issues"
+  },
+  "homepage": "https://github.com/paulcarroll/pcarroll.me#readme",
+  "dependencies": {
+    "mdbootstrap": "^4.4.0"
+  }
+}
