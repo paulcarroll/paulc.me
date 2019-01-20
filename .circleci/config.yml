@@ -1,0 +1,20 @@
+---
+version: 2
+jobs:
+  build:
+    docker:
+      - image: softinstigate/jekyll
+      
+    working_directory: ~/code
+    
+    steps:
+      # Checkout the repository
+      - checkout
+
+      - run: gem install jekyll
+      - run: cd ~/code && ls . && jekyll build
+
+      # Deploy html to S3
+      - run: aws s3 sync --exclude="*" ~/code/sit/ s3://paulc.me/ --delete
+
+
