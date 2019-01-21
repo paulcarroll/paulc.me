@@ -5,15 +5,17 @@ jobs:
   build:
     <<: *defaults
     docker:
-      - image: circleci/ruby:2.5
+      - image: circleci/ruby:2.6
     environment:
       BUNDLE_PATH: ~/repo/vendor/bundle
     steps:
       - checkout
       - restore_cache:
           keys:
-            - rubygems-v2-{{ checksum "Gemfile.lock" }}
-            - rubygems-v2-fallback
+            - rubygems-v2.1-{{ checksum "Gemfile.lock" }}
+            - rubygems-v2.1-fallback
+      - run: gem update --system
+      - run: gem update bundler
       - run:
           name: Bundle Install
           command: bundle check || bundle install
