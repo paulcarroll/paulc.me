@@ -1,31 +1,64 @@
----
+defaults: &defaults
+  working_directory: ~/repo
 version: 2
 jobs:
   build:
+    <<: *defaults
     docker:
-      - image: jekyll/builder
-      #- image: softinstigate/jekyll
-      #- image: mesosphere/aws-cli
-      
-    working_directory: ~/code
-
-    
+      - image: circleci/ruby:2.5
     environment:
-      JEKYLL_ENV: dev
-      JOB_RESULTS_PATH: run-results
-    
+      BUNDLE_PATH: ~/repo/vendor/bundle
     steps:
-      # Checkout the repository
       - checkout
-
-      - run: cd ~/code
-      #- run: jekyll build
-
-
-      - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
-
-      # Deploy html to S3
-      #- run: aws s3 sync --exclude="*" ~/code/site/ s3://paulc.me/ --delete
-      - run: bundle exec jekyll build --config _config.yml --source . --destination _site/ 2>&1 | tee $JOB_RESULTS_PATH/build-results.txt
-
-
+      - restore_cache:
+          keys:
+            - rubygems-v2-{{ checksum "Gemfile.lock" }}
+            - rubygems-v2-fallback
+      - run:
+          name: Bundle Install
+          command: bundle check || bundle install
+#      - run:
+#          name: HTMLProofer tests
+#          command: |
+#            bundle exec htmlproofer ./_site \
+#              --allow-hash-href \
+#              --check-favicon  \
+#              --check-html \
+#              --disable-external
+      - save_cache:
+          key: rubygems-v1-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+      - run:
+          name: Jekyll build
+          command: bundle exec jekyll build
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - _site
+  deploy:
+    <<: *defaults
+    docker:
+      - image: circleci/python:3.6.3
+    environment:
+      S3_BUCKET_NAME: paulc.me
+    steps:
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Install AWS CLI
+          command: pip install awscli --upgrade --user
+      - run:
+          name: Upload to s3
+          command: ~/.local/bin/aws s3 sync ./_site s3://$S3_BUCKET_NAME/ --delete --acl public-read
+workflows:
+  version: 2
+  test-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
