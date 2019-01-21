@@ -3,18 +3,29 @@ version: 2
 jobs:
   build:
     docker:
-      - image: softinstigate/jekyll
+      - image: jekyll/builder
+      #- image: softinstigate/jekyll
+      #- image: mesosphere/aws-cli
       
     working_directory: ~/code
+
+    
+    environment:
+      JEKYLL_ENV: dev
+      JOB_RESULTS_PATH: run-results
     
     steps:
       # Checkout the repository
       - checkout
 
-      - run: gem install jekyll
-      - run: cd ~/code && ls . && jekyll build
+      - run: cd ~/code
+      #- run: jekyll build
+
+
+      - run: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle
 
       # Deploy html to S3
-      - run: aws s3 sync --exclude="*" ~/code/sit/ s3://paulc.me/ --delete
+      #- run: aws s3 sync --exclude="*" ~/code/site/ s3://paulc.me/ --delete
+      - run: bundle exec jekyll build --config _config.yml --source . --destination _site/ 2>&1 | tee $JOB_RESULTS_PATH/build-results.txt
 
 
